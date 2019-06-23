@@ -16,5 +16,5 @@ public interface WatchService {
 	 * @param exchange
 	 * @return
 	 */
-	public HashMap<String, Double> getWatchSmry(String exchange);
+	public HashMap<String, Object> getWatchSmry(String exchange);
 }
