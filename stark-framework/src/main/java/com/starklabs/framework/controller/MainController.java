@@ -65,28 +65,42 @@ public class MainController {
 	}
 	
 	/**
+	 * 비트코인의 가격을 가져온다
+	 */
+	@RequestMapping(value = "/sell", method = RequestMethod.GET)
+	public String price(@RequestParam("price") double price, @RequestParam("rate") double rate, Model model) {
+		model.addAttribute("price", price);
+		model.addAttribute("rate", rate);
+		model.addAttribute("sell price", (int)(price+(price*rate)));
+		
+		return "jsonView";
+	}
+	
+	
+	/**
 	 * 리포트
 	 */
 	@RequestMapping(value = "/report", method = RequestMethod.GET)
 	public String report(Model model) {
 		// api 호출
 		//https://api.cryptowat.ch/markets/coinbase-pro/btcusd/summary
-		HashMap<String, Object> watchMap = watchService.getWatchSmry("coinbase-pro");
+		//HashMap<String, Object> watchMap = watchService.getWatchSmry("coinbase-pro");
+		HashMap<String, Object> watchMap = watchService.getWatchSmry("bithumb");
 		double dayHigh = Double.parseDouble(String.valueOf(watchMap.get("day-high")));
 		double dayLow = Double.parseDouble(String.valueOf(watchMap.get("day-low")));
 		double dayLast = Double.parseDouble(String.valueOf(watchMap.get("day-last")));
-		// 1달 고점
 		
-		// 1주일 고점
-		// 오늘 고점
-		// 1주일 저점
-		// 오늘 저점
+		if(dayHigh > maxPrice)
+			maxPrice = dayHigh;
+		double change = (dayHigh-dayLow)/dayHigh;
+
 		HashMap<String, Object> priceMap = new LinkedHashMap<String, Object> ();
 		priceMap.put("최근 고점 가격", maxPrice);
 		priceMap.put("금일 고점 가격", dayHigh);
 		priceMap.put("금일 저점 가격", dayLow);
 		priceMap.put("현재 가격", dayLast);
-		
+		priceMap.put("변동성", String.format("%.2f", change*100) + "%");
+				
 		HashMap<String, Object> reportMap = new LinkedHashMap<String, Object> ();
 		HashMap<String, Object> shortTermReportMap = new LinkedHashMap<String, Object> ();
 		HashMap<String, Object> longTermReportMap = new LinkedHashMap<String, Object> ();
@@ -103,13 +117,17 @@ public class MainController {
 			shortTermReportMap.put("데이 트레이딩 리포트", "하루 5프로 이상 하락이 된 상태로 악재 및 조정장이 아닌 경우 '매수 추천' 상태");
 		} else if(todayRate >= 0.02) {
 			shortTermReportMap.put("데이 트레이딩 리포트", "하루 2~5프로 하락이 된 상태로 악재 및 조정장이 아닌 경우 '매수' 상태");
+		} else if(todayRate >= 0.01) {
+			shortTermReportMap.put("데이 트레이딩 리포트", "하루 1프로 하락이 된 상태로 악재 및 조정장이 아닌 경우 0.75프로 먹기 위한 적절한 '매수' 상태");
 		} else {
-			double dayLowRecmmd = dayHigh-(dayHigh*0.03);
-			double dayHighRecmmd = dayHigh-(dayHigh*0.05);
+			double dayLowRecmmd = dayHigh-(dayHigh*0.01);
+			double dayMidRecmmd = dayHigh-(dayHigh*0.02);
+			double dayHighRecmmd = dayHigh-(dayHigh*0.03);
 			
 			shortTermReportMap.put("데이 트레이딩 리포트", 
-					"금일 고점 대비, 2프로 이상 하락이 아닌 상태로 횡보 단타를 노릴 경우, " + 
-					String.format("%.0f", dayLowRecmmd) + "~" + 
+					"금일 고점 대비, 1프로 이상 하락이 아닌 상태로 횡보 단타(1,2,3%)를 노릴 경우, " + 
+					String.format("%.0f", dayLowRecmmd) + "," +
+					String.format("%.0f", dayMidRecmmd) + "," +
 					String.format("%.0f", dayHighRecmmd));
 		}
 		

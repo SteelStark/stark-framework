@@ -38,8 +38,12 @@ public class WatchServiceImpl implements WatchService {
 	@Override
 	public HashMap<String, Object> getWatchSmry(String exchange) {
 		BufferedReader in = null;
-		HashMap<String, Object> rtnMap = new HashMap<String, Object> (); 
-		String url = "https://api.cryptowat.ch/markets/coinbase-pro/btcusd/summary";
+		HashMap<String, Object> rtnMap = new HashMap<String, Object> ();
+		String url = "http://api.cryptowat.ch/markets/coinbase-pro/btcusd/summary";
+		
+		if(exchange.equals("bithumb")) {
+			url = "http://api.cryptowat.ch/markets/bithumb/btckrw/summary";
+		}
 		
 		try {
 			URL obj = new URL(url);
